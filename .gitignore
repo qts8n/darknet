@@ -5,6 +5,8 @@
 *.png
 *.jpg
 *.pyc
+libdarknet.so
+libdarknet.a
 old/
 mnist/
 data/
@@ -15,6 +17,7 @@ opencv/
 convnet/
 decaf/
 submission/
+backup/
 cfg/
 darknet
 .fuse*
@@ -25,3 +28,5 @@ ehthumbs.db
 Icon?
 Thumbs.db
 *.swp
+.idea
+.vscode

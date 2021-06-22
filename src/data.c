@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -13,7 +14,10 @@ list *get_paths(char *filename)
 {
     char *path;
     FILE *file = fopen(filename, "r");
-    if(!file) file_error(filename);
+    if(!file) {
+        perror("ERROR");
+        file_error(filename);
+    }
     list *lines = make_list();
     while((path=fgetl(file))){
         list_insert(lines, path);
@@ -21,23 +25,6 @@ list *get_paths(char *filename)
     fclose(file);
     return lines;
 }
-
-/*
-char **get_random_paths_indexes(char **paths, int n, int m, int *indexes)
-{
-    char **random_paths = calloc(n, sizeof(char*));
-    int i;
-    pthread_mutex_lock(&mutex);
-    for(i = 0; i < n; ++i){
-        int index = rand()%m;
-        indexes[i] = index;
-        random_paths[i] = paths[index];
-        if(i == 0) printf("%s\n", paths[index]);
-    }
-    pthread_mutex_unlock(&mutex);
-    return random_paths;
-}
-*/
 
 char **get_random_paths(char **paths, int n, int m)
 {
@@ -122,12 +109,6 @@ matrix load_image_augment_paths(char **paths, int n, int min, int max, int size,
         if (flip) flip_image(crop);
         random_distort_image(crop, hue, saturation, exposure);
 
-        /*
-        show_image(im, "orig");
-        show_image(crop, "crop");
-        cvWaitKey(0);
-        */
-        //grayscale_image_3c(crop);
         free_image(im);
         X.vals[i] = crop.data;
         X.cols = crop.h*crop.w*crop.c;
@@ -214,6 +195,13 @@ void correct_boxes(box_label *boxes, int n, float dx, float dy, float sx, float 
     }
 }
 
+void labelpath_extention(char *path, char *labelpath)
+{
+    find_replace(labelpath, ".jpeg", ".txt", labelpath);
+    find_replace(labelpath, ".png", ".txt", labelpath);
+    find_replace(labelpath, ".PNG", ".txt", labelpath);
+}
+
 void fill_truth_swag(char *path, float *truth, int classes, int flip, float dx, float dy, float sx, float sy)
 {
     char labelpath[4096];
@@ -222,6 +210,7 @@ void fill_truth_swag(char *path, float *truth, int classes, int flip, float dx, 
     find_replace(labelpath, ".jpg", ".txt", labelpath);
     find_replace(labelpath, ".JPG", ".txt", labelpath);
     find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    labelpath_extention(labelpath, labelpath);
 
     int count = 0;
     box_label *boxes = read_boxes(labelpath, &count);
@@ -257,11 +246,12 @@ void fill_truth_region(char *path, float *truth, int classes, int num_boxes, int
     char labelpath[4096];
     find_replace(path, "images", "labels", labelpath);
     find_replace(labelpath, "JPEGImages", "labels", labelpath);
-
     find_replace(labelpath, ".jpg", ".txt", labelpath);
     find_replace(labelpath, ".png", ".txt", labelpath);
     find_replace(labelpath, ".JPG", ".txt", labelpath);
     find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    labelpath_extention(labelpath, labelpath);
+
     int count = 0;
     box_label *boxes = read_boxes(labelpath, &count);
     randomize_boxes(boxes, count);
@@ -369,6 +359,8 @@ void fill_truth_iseg(char *path, int num_boxes, float *truth, int classes, int w
     find_replace(labelpath, ".jpg", ".txt", labelpath);
     find_replace(labelpath, ".JPG", ".txt", labelpath);
     find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    labelpath_extention(labelpath, labelpath);
+
     FILE *file = fopen(labelpath, "r");
     if(!file) file_error(labelpath);
     char buff[32788];
@@ -407,6 +399,8 @@ void fill_truth_mask(char *path, int num_boxes, float *truth, int classes, int w
     find_replace(labelpath, ".jpg", ".txt", labelpath);
     find_replace(labelpath, ".JPG", ".txt", labelpath);
     find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    labelpath_extention(labelpath, labelpath);
+
     FILE *file = fopen(labelpath, "r");
     if(!file) file_error(labelpath);
     char buff[32788];
@@ -449,12 +443,12 @@ void fill_truth_detection(char *path, int num_boxes, float *truth, int classes, 
     char labelpath[4096];
     find_replace(path, "images", "labels", labelpath);
     find_replace(labelpath, "JPEGImages", "labels", labelpath);
-
     find_replace(labelpath, "raw", "labels", labelpath);
     find_replace(labelpath, ".jpg", ".txt", labelpath);
-    find_replace(labelpath, ".png", ".txt", labelpath);
     find_replace(labelpath, ".JPG", ".txt", labelpath);
     find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    labelpath_extention(labelpath, labelpath);
+
     int count = 0;
     box_label *boxes = read_boxes(labelpath, &count);
     randomize_boxes(boxes, count);
@@ -600,13 +594,11 @@ matrix load_regression_labels_paths(char **paths, int n, int k)
         find_replace(labelpath, ".JPG", ".txt", labelpath);
         find_replace(labelpath, ".JPeG", ".txt", labelpath);
         find_replace(labelpath, ".Jpeg", ".txt", labelpath);
-        find_replace(labelpath, ".PNG", ".txt", labelpath);
         find_replace(labelpath, ".TIF", ".txt", labelpath);
         find_replace(labelpath, ".bmp", ".txt", labelpath);
-        find_replace(labelpath, ".jpeg", ".txt", labelpath);
         find_replace(labelpath, ".jpg", ".txt", labelpath);
-        find_replace(labelpath, ".png", ".txt", labelpath);
         find_replace(labelpath, ".tif", ".txt", labelpath);
+        labelpath_extention(labelpath, labelpath);
 
         FILE *file = fopen(labelpath, "r");
         for(j = 0; j < k; ++j){
@@ -681,6 +673,8 @@ image get_segmentation_image(char *path, int w, int h, int classes)
     find_replace(labelpath, ".jpg", ".txt", labelpath);
     find_replace(labelpath, ".JPG", ".txt", labelpath);
     find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    labelpath_extention(labelpath, labelpath);
+
     image mask = make_image(w, h, classes);
     FILE *file = fopen(labelpath, "r");
     if(!file) file_error(labelpath);
@@ -708,6 +702,8 @@ image get_segmentation_image2(char *path, int w, int h, int classes)
     find_replace(labelpath, ".jpg", ".txt", labelpath);
     find_replace(labelpath, ".JPG", ".txt", labelpath);
     find_replace(labelpath, ".JPEG", ".txt", labelpath);
+    labelpath_extention(labelpath, labelpath);
+
     image mask = make_image(w, h, classes+1);
     int i;
     for(i = 0; i < w*h; ++i){
