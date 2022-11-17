@@ -1,7 +1,6 @@
-GPU := $(if $(GPU), $(GPU), 1)
-CUDNN := $(if $(CUDNN), $(CUDNN), 1)
-DEBUG := $(if $(DEBUG), $(DEBUG), 0)
-
+GPU=1
+CUDNN=1
+DEBUG=0
 OPENCV=0
 OPENMP=0
 

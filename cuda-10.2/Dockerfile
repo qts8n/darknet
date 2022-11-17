@@ -2,12 +2,6 @@ FROM qts8n/cuda-python:devel
 
 LABEL maintainer="qts8n <efisher9680@gmail.com>"
 
-# next variables are used in Makefile
-# NOTE: it is important to keep them here
-ARG GPU=1
-ARG CUDNN=1
-ARG DEBUG=0
-
 ENV BUILD_DIR=/root/temp
 ENV SRC_DIR=/usr/src/darknet
 
